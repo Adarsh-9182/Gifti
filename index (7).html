@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>SPECIMEN · MOTI SAKSHI</title>
+
+<!-- Display typography (Fontshare) + Inter (Google) with strong fallbacks -->
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700,800&f[]=satoshi@400,500,700,900&f[]=general-sans@400,500,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root{
+  --ink:#070409;
+  --rose:#ff5e93;
+  --rose-soft:#ff9bc0;
+  --magenta:#ff1f6d;
+  --cyan:#41f0e3;
+  --violet:#8a5cff;
+  --gold:#ffcf5c;
+  --paper:#f6ede3;
+  --text:#fbeef4;
+  --display:'Clash Display','General Sans',system-ui,sans-serif;
+  --body:'Satoshi','Inter',system-ui,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{ -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
+body{
+  background:var(--ink); color:var(--text); font-family:var(--body);
+  overflow-x:hidden; cursor:none;
+}
+body.locked{overflow:hidden; height:100vh;}
+a,button{font-family:inherit}
+::selection{background:var(--magenta); color:#fff}
+
+/* grain overlay */
+.grain{
+  position:fixed; inset:-50%; z-index:120; pointer-events:none; opacity:.06;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  mix-blend-mode:overlay; animation:grainShift 8s steps(6) infinite;
+}
+@keyframes grainShift{
+  0%{transform:translate(0,0)}20%{transform:translate(-6%,3%)}40%{transform:translate(4%,-5%)}
+  60%{transform:translate(-3%,4%)}80%{transform:translate(5%,2%)}100%{transform:translate(0,0)}
+}
+
+/* ambient fx canvas */
+#fx{position:fixed; inset:0; z-index:0; pointer-events:none;}
+
+/* custom cursor */
+.cur-dot,.cur-ring{position:fixed; top:0; left:0; z-index:200; pointer-events:none; border-radius:50%;
+  transform:translate(-50%,-50%); mix-blend-mode:difference;}
+.cur-dot{width:7px; height:7px; background:#fff;}
+.cur-ring{width:38px; height:38px; border:1.5px solid rgba(255,255,255,.6); transition:width .25s, height .25s, border-color .25s;}
+.cur-ring.hot{width:64px; height:64px; border-color:var(--cyan);}
+@media (pointer:coarse){ body{cursor:auto} .cur-dot,.cur-ring{display:none} }
+
+/* ============================================================
+   OPENING STAGE — 3D gift
+   ============================================================ */
+#stage{position:fixed; inset:0; z-index:100; background:
+  radial-gradient(120% 120% at 50% 18%, #2a0f24 0%, #120713 46%, #05030a 100%);}
+#stage canvas{position:absolute; inset:0; display:block;}
+.stage-ui{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+  justify-content:flex-end; padding-bottom:9vh; text-align:center; z-index:2;}
+.kicker{font-family:var(--body); font-weight:700; letter-spacing:.5em; font-size:11px;
+  color:var(--cyan); text-transform:uppercase; opacity:.85;}
+.stage-title{font-family:var(--display); font-weight:800; line-height:.9; margin:14px 0 30px;
+  font-size:clamp(40px,8vw,104px); letter-spacing:-.02em;
+  background:linear-gradient(180deg,#fff, #ffb9d6 70%, var(--magenta));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  filter:drop-shadow(0 8px 40px rgba(255,31,109,.35));}
+.open-btn{position:relative; font-family:var(--body); font-weight:700; font-size:16px; color:#fff;
+  padding:18px 38px; border-radius:100px; border:1px solid rgba(255,255,255,.18); cursor:none;
+  background:linear-gradient(120deg,var(--magenta),var(--rose)); overflow:hidden;
+  box-shadow:0 20px 60px rgba(255,31,109,.4), inset 0 0 0 1px rgba(255,255,255,.1);}
+.open-btn span{position:relative; z-index:2; display:inline-flex; gap:10px; align-items:center}
+.open-btn::after{content:""; position:absolute; inset:0; background:
+  linear-gradient(120deg,transparent, rgba(255,255,255,.55), transparent); transform:translateX(-120%);}
+.open-btn:hover::after{transform:translateX(120%); transition:transform .8s ease}
+.hint{margin-top:20px; font-size:12px; letter-spacing:.25em; color:rgba(255,255,255,.4); text-transform:uppercase}
+
+#flash{position:fixed; inset:0; z-index:130; background:#fff; opacity:0; pointer-events:none;}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+#content{position:relative; z-index:1; opacity:0; visibility:hidden;}
+.phase{position:relative; min-height:100vh; display:flex; align-items:center; overflow:hidden;}
+.wrap{width:min(1180px,92vw); margin:0 auto; padding:120px 0; position:relative; z-index:3;}
+.eyebrow{display:inline-flex; align-items:center; gap:12px; font-weight:700; letter-spacing:.4em;
+  font-size:11px; text-transform:uppercase; color:var(--cyan); margin-bottom:28px;}
+.eyebrow::before{content:""; width:42px; height:1px; background:currentColor; opacity:.6}
+
+.giant{font-family:var(--display); font-weight:800; line-height:.84; letter-spacing:-.03em;
+  font-size:clamp(58px,16vw,230px);}
+
+.reveal{opacity:0; transform:translateY(40px); transition:opacity 1s cubic-bezier(.2,.7,.2,1), transform 1s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1; transform:none}
+.reveal.d1{transition-delay:.1s}.reveal.d2{transition-delay:.22s}.reveal.d3{transition-delay:.34s}.reveal.d4{transition-delay:.46s}
+
+/* aurora blobs */
+.aurora{position:absolute; border-radius:50%; filter:blur(90px); pointer-events:none; opacity:.45; z-index:0;}
+
+/* ---------- PHASE 1 : THE SPECIMEN ---------- */
+#p1{background:radial-gradient(130% 120% at 70% 10%, #2a0f24, #0a0410 60%, #05030a);}
+#p1 .b1{width:50vw; height:50vw; background:var(--magenta); top:-10%; left:-8%; opacity:.35}
+#p1 .b2{width:42vw; height:42vw; background:var(--violet); bottom:-12%; right:-6%; opacity:.3}
+.detected{font-family:var(--display); font-weight:800; letter-spacing:-.04em; line-height:.82;
+  font-size:clamp(72px,20vw,300px);
+  background:linear-gradient(175deg,#fff 0%, #ffc2dc 50%, var(--magenta) 100%);
+  -webkit-background-clip:text; background-clip:text; color:transparent;}
+.lede{font-size:clamp(16px,2vw,21px); color:rgba(255,255,255,.66); max-width:560px; line-height:1.6; margin-top:30px}
+.sub-name{color:var(--rose-soft); font-weight:700}
+
+/* ---------- PHASE 2 : COMMAND CENTER / HUD ---------- */
+#p2{background:radial-gradient(120% 120% at 20% 30%, #04161a, #020a0d 70%, #01060a); color:#dffcfa;}
+.hud-grid{display:grid; grid-template-columns:1.1fr .9fr; gap:60px; align-items:center}
+@media(max-width:860px){.hud-grid{grid-template-columns:1fr; gap:40px}}
+.radar{position:relative; aspect-ratio:1; width:100%; max-width:440px; margin:0 auto; border-radius:50%;
+  border:1px solid rgba(65,240,227,.25); box-shadow:0 0 60px rgba(65,240,227,.12), inset 0 0 60px rgba(65,240,227,.08);}
+.radar::before,.radar::after{content:""; position:absolute; inset:0; border-radius:50%; border:1px solid rgba(65,240,227,.14)}
+.radar::before{inset:18%}.radar::after{inset:36%}
+.radar .cross{position:absolute; inset:0}
+.radar .cross::before,.radar .cross::after{content:""; position:absolute; background:rgba(65,240,227,.14)}
+.radar .cross::before{left:50%; top:0; bottom:0; width:1px}
+.radar .cross::after{top:50%; left:0; right:0; height:1px}
+.sweep{position:absolute; inset:0; border-radius:50%; overflow:hidden}
+.sweep::before{content:""; position:absolute; left:50%; top:50%; width:50%; height:50%; transform-origin:top left;
+  background:conic-gradient(from 0deg, rgba(65,240,227,.5), transparent 60deg); animation:spin 3.6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.blip{position:absolute; width:10px; height:10px; border-radius:50%; background:var(--cyan);
+  box-shadow:0 0 14px var(--cyan); animation:ping 2.6s ease-out infinite}
+@keyframes ping{0%{transform:scale(.4); opacity:1}70%{opacity:.4}100%{transform:scale(2.2); opacity:0}}
+.diag{display:flex; flex-direction:column; gap:22px}
+.diag-row{display:flex; flex-direction:column; gap:8px}
+.diag-row .top{display:flex; justify-content:space-between; align-items:baseline; font-size:14px; letter-spacing:.06em}
+.diag-row .lab{color:rgba(223,252,250,.7); font-weight:500}
+.diag-row .val{font-family:var(--display); font-weight:700; font-size:22px; color:var(--cyan)}
+.meter{height:3px; background:rgba(65,240,227,.12); border-radius:3px; overflow:hidden}
+.meter i{display:block; height:100%; width:0; background:linear-gradient(90deg,var(--cyan),#9affff);
+  box-shadow:0 0 12px var(--cyan); transition:width 1.6s cubic-bezier(.2,.8,.2,1)}
+.stream{position:absolute; top:0; bottom:0; width:120px; font-family:var(--body); font-size:11px; line-height:1.9;
+  color:rgba(65,240,227,.18); white-space:pre; pointer-events:none; user-select:none; overflow:hidden}
+
+/* ---------- PHASE 3 : INVESTIGATION ---------- */
+#p3{background:radial-gradient(120% 120% at 80% 20%, #1c0708, #0a0304 70%, #060203);}
+#p3 .b1{width:46vw;height:46vw;background:#b01034;top:-6%;right:-8%;opacity:.3}
+.case-no{font-family:var(--display); font-weight:800; font-size:clamp(15px,1.4vw,18px); letter-spacing:.4em; color:#ff7a7a}
+.invest-h{font-family:var(--display); font-weight:800; line-height:.9; font-size:clamp(40px,8vw,108px); margin:18px 0; letter-spacing:-.03em}
+.invest-p{max-width:540px; color:rgba(255,225,225,.6); font-size:clamp(16px,2vw,20px); line-height:1.65}
+
+/* ---------- PHASE 4 : EVIDENCE (dossier, not cards) ---------- */
+#p4{background:radial-gradient(120% 120% at 30% 10%, #160913, #0a0410 70%, #05030a);}
+.dossier{display:flex; flex-direction:column}
+.file{display:grid; grid-template-columns:auto 1fr; gap:clamp(20px,5vw,70px); align-items:start;
+  padding:clamp(34px,5vw,60px) 0; border-top:1px solid rgba(255,255,255,.08); position:relative}
+.file:last-child{border-bottom:1px solid rgba(255,255,255,.08)}
+.file .num{font-family:var(--display); font-weight:800; font-size:clamp(54px,9vw,150px); line-height:.8;
+  color:transparent; -webkit-text-stroke:1.5px rgba(255,158,200,.5); letter-spacing:-.04em; transition:color .5s}
+.file:hover .num{color:rgba(255,94,147,.14); -webkit-text-stroke-color:var(--rose)}
+.file .ftitle{font-family:var(--display); font-weight:700; font-size:clamp(24px,4vw,44px); letter-spacing:-.02em; margin-bottom:14px}
+.file .fbody{color:rgba(255,255,255,.6); font-size:clamp(15px,1.8vw,18px); line-height:1.65; max-width:620px}
+.file .ftag{display:inline-block; margin-top:18px; font-size:11px; letter-spacing:.3em; text-transform:uppercase;
+  color:var(--gold); border:1px solid rgba(255,207,92,.3); padding:7px 14px; border-radius:100px}
+
+/* ---------- PHASE 5 : RAGE ---------- */
+#p5{background:radial-gradient(120% 120% at 50% 50%, #1a0220, #0a0110 60%, #050008);}
+.rage-stage{text-align:center; position:relative}
+.gauge-wrap{position:relative; width:min(440px,82vw); aspect-ratio:1; margin:30px auto 0}
+.ring{position:absolute; inset:0; border-radius:50%; border:1px solid rgba(255,31,109,.18)}
+.ring.r2{inset:8%; border-style:dashed; border-color:rgba(255,31,109,.25); animation:spin 18s linear infinite}
+.ring.r3{inset:16%; border-color:rgba(138,92,255,.3); animation:spin 11s linear infinite reverse}
+.gauge-svg{position:absolute; inset:0; transform:rotate(-90deg)}
+.gauge-num{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center}
+.gauge-num b{font-family:var(--display); font-weight:800; font-size:clamp(60px,14vw,120px); line-height:1;
+  background:linear-gradient(180deg,#fff,var(--rose)); -webkit-background-clip:text; background-clip:text; color:transparent}
+.gauge-num small{font-size:12px; letter-spacing:.4em; color:rgba(255,255,255,.45); text-transform:uppercase; margin-top:6px}
+.rage-msg{margin-top:30px; font-family:var(--display); font-weight:700; font-size:clamp(18px,3vw,30px); min-height:38px; color:#fff}
+.rage-btn{margin-top:26px; font-weight:700; font-size:16px; color:#fff; padding:18px 40px; border-radius:100px;
+  border:1px solid rgba(255,31,109,.4); cursor:none; background:linear-gradient(120deg,var(--magenta),#ff5e93);
+  box-shadow:0 18px 50px rgba(255,31,109,.4)}
+body.shake #content{animation:shake .4s}
+@keyframes shake{10%{transform:translate(-7px,5px)}30%{transform:translate(7px,-5px)}50%{transform:translate(-6px,-4px)}70%{transform:translate(6px,4px)}90%{transform:translate(-3px,2px)}}
+
+/* ---------- PHASE 6 : EMOTIONAL ---------- */
+#p6{background:
+  radial-gradient(120% 100% at 50% 0%, #fff3ea 0%, #ffe7ef 38%, #f7d9e6 100%);
+  color:#3a1226;}
+#p6 .eyebrow{color:#c0497a}
+#p6 .b1{width:40vw;height:40vw;background:#ffd9c6;top:-10%;left:-6%;opacity:.6}
+.warm-h{font-family:var(--serif); font-weight:500; font-size:clamp(34px,6vw,76px); line-height:1.05; letter-spacing:-.01em}
+.warm-p{font-family:var(--serif); font-weight:400; font-size:clamp(18px,2.6vw,26px); line-height:1.7; color:#6e3450; max-width:680px; margin:0 auto}
+.gallery{display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin:60px 0}
+@media(max-width:760px){.gallery{grid-template-columns:repeat(2,1fr)}}
+.frame{aspect-ratio:3/4; border-radius:14px; overflow:hidden; position:relative; background:#fff;
+  box-shadow:0 26px 60px rgba(180,90,120,.25); display:grid; place-items:center; text-align:center; padding:16px;
+  color:#b06a86; transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.frame:nth-child(odd){transform:translateY(-14px)}
+.frame:hover{transform:translateY(-26px) rotate(-1deg)}
+.frame .ph{font-size:34px}
+.frame small{display:block; font-size:11px; letter-spacing:.15em; text-transform:uppercase; margin-top:8px; opacity:.7}
+.signoff{font-family:var(--serif); font-weight:500; font-style:italic; font-size:clamp(22px,4vw,40px); color:var(--magenta); margin-top:24px}
+.music-btn{margin-top:40px; font-weight:600; font-size:15px; color:#7a2e4f; padding:14px 30px; border-radius:100px; cursor:none;
+  border:1px solid rgba(192,73,122,.35); background:rgba(255,255,255,.55); backdrop-filter:blur(10px)}
+
+.footer{text-align:center; padding:40px 0 70px; font-size:12px; letter-spacing:.2em; color:#a86a86; text-transform:uppercase}
+
+/* progress + nav */
+.progress{position:fixed; top:0; left:0; height:2px; width:0; z-index:140;
+  background:linear-gradient(90deg,var(--cyan),var(--magenta),var(--gold))}
+.logo{position:fixed; top:22px; left:26px; z-index:90; font-family:var(--display); font-weight:800; letter-spacing:.02em;
+  font-size:15px; opacity:0; transition:opacity .6s; cursor:none; user-select:none}
+.logo.show{opacity:.9}
+.logo .pig{display:inline-block; transition:transform .3s}
+.logo:hover .pig{transform:scale(1.3) rotate(-10deg)}
+
+/* magnetic */
+.magnetic{will-change:transform}
+
+/* toasts */
+#toasts{position:fixed; right:18px; bottom:18px; z-index:300; display:flex; flex-direction:column; gap:10px; align-items:flex-end}
+.toast{font-weight:600; font-size:13px; color:#fff; padding:12px 16px; border-radius:14px; max-width:300px; line-height:1.4;
+  background:rgba(20,8,18,.8); border:1px solid rgba(255,94,147,.4); backdrop-filter:blur(14px);
+  box-shadow:0 16px 40px rgba(0,0,0,.4); transform:translateX(120%); animation:toastIn .5s forwards}
+@keyframes toastIn{to{transform:none}}
+
+/* secret / ultimate modes */
+body.secret{filter:hue-rotate(40deg) saturate(1.25)}
+body.ultimate #content{animation:rainbow 6s linear infinite}
+@keyframes rainbow{to{filter:hue-rotate(360deg)}}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms!important; animation-iteration-count:1!important}
+  .reveal{transition:none; opacity:1; transform:none}
+}
+</style>
+</head>
+<body class="locked">
+
+<div class="grain"></div>
+<canvas id="fx"></canvas>
+<div class="cur-ring"></div>
+<div class="cur-dot"></div>
+<div class="progress"></div>
+<div class="logo" title="psst… double-click me"><span class="pig">🐷</span> SPECIMEN&nbsp;/&nbsp;M.S.</div>
+<div id="toasts"></div>
+<div id="flash"></div>
+
+<!-- ====================== OPENING STAGE ====================== -->
+<section id="stage">
+  <canvas id="gift-canvas"></canvas>
+  <div class="stage-ui">
+    <div class="kicker">International Oink Society · Confidential</div>
+    <h1 class="stage-title">A gift has<br>arrived for you</h1>
+    <button class="open-btn magnetic" id="openBtn"><span>Open it ✦</span></button>
+    <div class="hint">move your mouse · then open</div>
+  </div>
+</section>
+
+<!-- ====================== CONTENT ====================== -->
+<main id="content">
+
+  <!-- PHASE 1 -->
+  <section class="phase" id="p1">
+    <div class="aurora b1"></div><div class="aurora b2"></div>
+    <div class="wrap">
+      <div class="eyebrow reveal">Phase 01 — Specimen confirmed</div>
+      <h2 class="detected reveal d1">PIG<br>DETECTED.</h2>
+      <p class="lede reveal d2">Subject designation <span class="sub-name">Moti Sakshi</span>. Classified as the rarest pig specimen ever recovered. The following dossier is graphic, scientific, and entirely her fault.</p>
+    </div>
+  </section>
+
+  <!-- PHASE 2 : HUD -->
+  <section class="phase" id="p2">
+    <div class="stream" id="stream1" style="left:2vw"></div>
+    <div class="stream" id="stream2" style="right:2vw"></div>
+    <div class="wrap">
+      <div class="eyebrow reveal" style="color:var(--cyan)">Phase 02 — Live AI Diagnostics</div>
+      <div class="hud-grid">
+        <div>
+          <h2 class="giant reveal d1" style="font-size:clamp(40px,7vw,92px); margin-bottom:30px">SYSTEM<br>O.I.N.K.</h2>
+          <div class="diag" id="diag"></div>
+        </div>
+        <div class="reveal d2">
+          <div class="radar">
+            <div class="cross"></div>
+            <div class="sweep"></div>
+            <div class="blip" style="top:30%; left:60%"></div>
+            <div class="blip" style="top:62%; left:38%; animation-delay:1.1s"></div>
+            <div class="blip" style="top:48%; left:70%; animation-delay:1.9s"></div>
+          </div>
+          <p style="text-align:center; margin-top:20px; font-size:13px; letter-spacing:.3em; color:rgba(65,240,227,.6); text-transform:uppercase">Snack signature locked</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PHASE 3 : INVESTIGATION -->
+  <section class="phase" id="p3">
+    <div class="aurora b1"></div>
+    <div class="wrap">
+      <div class="case-no reveal">CASE FILE · 88-OINK-2026</div>
+      <h2 class="invest-h reveal d1">The investigation<br>begins.</h2>
+      <p class="invest-p reveal d2">Three years of surveillance. Four hidden snack-cams. One traumatised cat. What our agents uncovered about Moti Sakshi cannot be unseen. Scroll only if you can handle the truth.</p>
+    </div>
+  </section>
+
+  <!-- PHASE 4 : EVIDENCE -->
+  <section class="phase" id="p4">
+    <div class="wrap">
+      <div class="eyebrow reveal">Phase 04 — Evidence Recovered</div>
+      <div class="dossier" id="dossier"></div>
+    </div>
+  </section>
+
+  <!-- PHASE 5 : RAGE -->
+  <section class="phase" id="p5">
+    <div class="wrap">
+      <div class="rage-stage">
+        <div class="eyebrow reveal" style="color:var(--magenta); justify-content:center; display:inline-flex">Phase 05 — Do not provoke</div>
+        <h2 class="giant reveal d1" style="font-size:clamp(44px,9vw,120px)">RAGE CORE</h2>
+        <div class="gauge-wrap reveal d2">
+          <div class="ring r2"></div><div class="ring r3"></div>
+          <svg class="gauge-svg" viewBox="0 0 200 200">
+            <circle cx="100" cy="100" r="86" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="10"/>
+            <circle id="gaugeArc" cx="100" cy="100" r="86" fill="none" stroke="url(#gg)" stroke-width="10"
+                    stroke-linecap="round" stroke-dasharray="540" stroke-dashoffset="540"
+                    style="filter:drop-shadow(0 0 10px var(--magenta))"/>
+            <defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#41f0e3"/><stop offset=".5" stop-color="#ff5e93"/><stop offset="1" stop-color="#ff1f6d"/>
+            </linearGradient></defs>
+          </svg>
+          <div class="gauge-num"><b id="rageNum">0</b><small>rage level</small></div>
+        </div>
+        <div class="rage-msg" id="rageMsg">Touch the core. She won't mind. Probably.</div>
+        <button class="rage-btn magnetic" id="rageBtn">⚡ Overload the core</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PHASE 6 : EMOTIONAL -->
+  <section class="phase" id="p6">
+    <div class="aurora b1"></div>
+    <div class="wrap" style="text-align:center">
+      <div class="eyebrow reveal" style="justify-content:center; display:inline-flex">Phase 06 — Off the record</div>
+      <h2 class="warm-h reveal d1">Okay. Jokes aside. 🤍</h2>
+      <div class="gallery" id="gallery"></div>
+      <p class="warm-p reveal d3">You are one of the most important people in my life. Thank you for the memories, the laughter, the fights, and the way you always show up. Life would be unbearably boring without you.</p>
+      <div class="signoff reveal d4">Happy Birthday, Moti Sakshi. I love you. 🐷🤍</div>
+      <button class="music-btn magnetic" id="musicBtn">♪ Play something gentle</button>
+      <div class="footer">Built with love, sarcasm & zero scientific accuracy</div>
+    </div>
+  </section>
+</main>
+
+<!-- ====================== LIBS ====================== -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<script>
+const NAME = "Moti Sakshi";
+const HAS_GSAP = typeof gsap !== "undefined";
+const HAS_THREE = typeof THREE !== "undefined";
+const REDUCED = matchMedia("(prefers-reduced-motion:reduce)").matches;
+if (HAS_GSAP && typeof ScrollTrigger !== "undefined") gsap.registerPlugin(ScrollTrigger);
+
+/* ---------- tiny audio synth (no files) ---------- */
+const Audio2 = (()=>{ let ctx,music;
+  const ac=()=>{ if(!ctx){const A=window.AudioContext||window.webkitAudioContext; ctx=new A();} if(ctx.state==="suspended")ctx.resume(); return ctx;};
+  const tone=(f,d,t="sine",g=.16,w=0)=>{const c=ac(),o=c.createOscillator(),G=c.createGain();o.type=t;o.frequency.value=f;
+    const s=c.currentTime+w;G.gain.setValueAtTime(.0001,s);G.gain.exponentialRampToValueAtTime(g,s+.02);
+    G.gain.exponentialRampToValueAtTime(.0001,s+d);o.connect(G);G.connect(c.destination);o.start(s);o.stop(s+d+.05);};
+  const oink=()=>{const c=ac(),o=c.createOscillator(),G=c.createGain();o.type="sawtooth";const t=c.currentTime;
+    o.frequency.setValueAtTime(180,t);o.frequency.exponentialRampToValueAtTime(440,t+.08);o.frequency.exponentialRampToValueAtTime(150,t+.22);
+    G.gain.setValueAtTime(.0001,t);G.gain.exponentialRampToValueAtTime(.22,t+.03);G.gain.exponentialRampToValueAtTime(.0001,t+.3);
+    o.connect(G);G.connect(c.destination);o.start(t);o.stop(t+.33);};
+  const zap=()=>{tone(620,.08,"square",.12);tone(960,.08,"square",.1,.04);};
+  const boom=()=>{const c=ac(),o=c.createOscillator(),G=c.createGain();o.type="sine";const t=c.currentTime;
+    o.frequency.setValueAtTime(160,t);o.frequency.exponentialRampToValueAtTime(40,t+.5);
+    G.gain.setValueAtTime(.3,t);G.gain.exponentialRampToValueAtTime(.0001,t+.6);o.connect(G);G.connect(c.destination);o.start(t);o.stop(t+.65);};
+  const fan=()=>[523,659,784,1046].forEach((f,i)=>tone(f,.4,"triangle",.16,i*.12));
+  const toggleMusic=(on)=>{const c=ac();
+    if(on&&!music){const notes=[523.25,659.25,783.99,659.25,587.33,493.88,587.33,659.25];const m=c.createGain();
+      m.gain.value=.0001;m.gain.exponentialRampToValueAtTime(.1,c.currentTime+1.2);m.connect(c.destination);let i=0;
+      const step=()=>{const o=c.createOscillator(),g=c.createGain();o.type="sine";o.frequency.value=notes[i%notes.length];
+        const t=c.currentTime;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.5,t+.1);
+        g.gain.exponentialRampToValueAtTime(.0001,t+.9);o.connect(g);g.connect(m);o.start(t);o.stop(t+.95);i++;};
+      step();music={m,iv:setInterval(step,900)};}
+    else if(!on&&music){clearInterval(music.iv);try{music.m.gain.exponentialRampToValueAtTime(.0001,c.currentTime+.8)}catch(e){}music=null;}};
+  return {oink,zap,boom,fan,toggleMusic};
+})();
+
+/* ---------- custom cursor + magnetic ---------- */
+(function(){
+  const dot=document.querySelector(".cur-dot"),ring=document.querySelector(".cur-ring");
+  let mx=innerWidth/2,my=innerHeight/2,rx=mx,ry=my;
+  addEventListener("mousemove",e=>{mx=e.clientX;my=e.clientY;dot.style.transform=`translate(${mx}px,${my}px) translate(-50%,-50%)`;});
+  (function loop(){rx+=(mx-rx)*.18;ry+=(my-ry)*.18;ring.style.transform=`translate(${rx}px,${ry}px) translate(-50%,-50%)`;requestAnimationFrame(loop);})();
+  const hot=()=>ring.classList.add("hot"),cold=()=>ring.classList.remove("hot");
+  document.querySelectorAll("button,a,.magnetic,.frame,.file").forEach(el=>{el.addEventListener("mouseenter",hot);el.addEventListener("mouseleave",cold);});
+  document.querySelectorAll(".magnetic").forEach(el=>{
+    el.addEventListener("mousemove",e=>{const r=el.getBoundingClientRect();const x=e.clientX-r.left-r.width/2,y=e.clientY-r.top-r.height/2;
+      el.style.transform=`translate(${x*.35}px,${y*.45}px)`;});
+    el.addEventListener("mouseleave",()=>{el.style.transform="";});
+  });
+})();
+
+/* ---------- ambient fx canvas (floating glow dots) ---------- */
+(function(){
+  const cv=document.getElementById("fx"),x=cv.getContext("2d");let w,h,dots;
+  const cols=["#ff5e93","#41f0e3","#8a5cff","#ffcf5c"];
+  function size(){w=cv.width=innerWidth;h=cv.height=innerHeight;
+    dots=Array.from({length:Math.min(70,Math.floor(w/22))},()=>({x:Math.random()*w,y:Math.random()*h,
+      r:Math.random()*2+.5,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,c:cols[Math.random()*cols.length|0],a:Math.random()*.5+.1}));}
+  size();addEventListener("resize",size);
+  (function draw(){x.clearRect(0,0,w,h);x.globalCompositeOperation="lighter";
+    dots.forEach(d=>{d.x+=d.vx;d.y+=d.vy;if(d.x<0||d.x>w)d.vx*=-1;if(d.y<0||d.y>h)d.vy*=-1;
+      const g=x.createRadialGradient(d.x,d.y,0,d.x,d.y,d.r*14);g.addColorStop(0,d.c);g.addColorStop(1,"transparent");
+      x.globalAlpha=d.a;x.fillStyle=g;x.beginPath();x.arc(d.x,d.y,d.r*14,0,7);x.fill();});
+    x.globalAlpha=1;requestAnimationFrame(draw);})();
+})();
+
+/* ---------- confetti / particle physics ---------- */
+function burst(cx,cy,count=70,glyphs=["🐷","🎉","✨","💖","⭐","🐽"]){
+  for(let i=0;i<count;i++){const s=document.createElement("div");
+    s.textContent=glyphs[i%glyphs.length];s.style.cssText=
+      `position:fixed;left:${cx}px;top:${cy}px;z-index:250;pointer-events:none;font-size:${14+Math.random()*20}px;will-change:transform,opacity`;
+    document.body.appendChild(s);
+    const a=Math.random()*Math.PI*2,sp=4+Math.random()*9;let vx=Math.cos(a)*sp,vy=Math.sin(a)*sp-6,px=cx,py=cy,rot=0,life=0,rv=(Math.random()-.5)*20;
+    (function step(){life++;vy+=.32;px+=vx;py+=vy;vx*=.99;rot+=rv;const op=Math.max(0,1-life/90);
+      s.style.transform=`translate(${px-cx}px,${py-cy}px) rotate(${rot}deg)`;s.style.opacity=op;
+      if(op<=0){s.remove();return}requestAnimationFrame(step);})();}
+}
+
+/* ---------- toasts / achievements ---------- */
+const unlocked=new Set();
+function toast(msg,once){ if(once){if(unlocked.has(once))return; unlocked.add(once);}
+  const t=document.createElement("div");t.className="toast";t.textContent=msg;document.getElementById("toasts").appendChild(t);
+  setTimeout(()=>{t.style.transition="transform .5s, opacity .5s";t.style.transform="translateX(120%)";t.style.opacity="0";setTimeout(()=>t.remove(),500);},4200);}
+
+/* =====================================================================
+   THREE.JS GIFT BOX
+   ===================================================================== */
+let openGift = null;
+(function(){
+  const canvas=document.getElementById("gift-canvas");
+  if(!HAS_THREE){ canvas.style.display="none"; return; }
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(34, innerWidth/innerHeight, .1, 100);
+  camera.position.set(0,2.4,7.2); camera.lookAt(0,.6,0);
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(innerWidth,innerHeight);
+  renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  if(THREE.sRGBEncoding) renderer.outputEncoding=THREE.sRGBEncoding;
+
+  // lights
+  scene.add(new THREE.AmbientLight(0x3b2740,.9));
+  const key=new THREE.DirectionalLight(0xffffff,1.25); key.position.set(4,8,5); key.castShadow=true;
+  key.shadow.mapSize.set(2048,2048); key.shadow.camera.near=1; key.shadow.camera.far=30;
+  key.shadow.camera.left=key.shadow.camera.bottom=-8; key.shadow.camera.right=key.shadow.camera.top=8; key.shadow.bias=-.0004;
+  scene.add(key);
+  const pPink=new THREE.PointLight(0xff1f6d,1.6,20); pPink.position.set(-4,2.5,3); scene.add(pPink);
+  const pCyan=new THREE.PointLight(0x41f0e3,1.3,20); pCyan.position.set(4,1.5,-2); scene.add(pCyan);
+  const pGold=new THREE.PointLight(0xffcf5c,.9,18); pGold.position.set(0,4,2); scene.add(pGold);
+
+  // reflective floor
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(60,60),
+    new THREE.MeshStandardMaterial({color:0x0a0510,roughness:.35,metalness:.7}));
+  floor.rotation.x=-Math.PI/2; floor.position.y=-.95; floor.receiveShadow=true; scene.add(floor);
+
+  // gift group
+  const gift=new THREE.Group(); scene.add(gift);
+  const boxMat=new THREE.MeshStandardMaterial({color:0x6a0f3a,roughness:.32,metalness:.35});
+  const ribMat=new THREE.MeshStandardMaterial({color:0xffcf5c,roughness:.18,metalness:.85});
+
+  const base=new THREE.Mesh(new THREE.BoxGeometry(2,1.35,2),boxMat); base.position.y=-.2; base.castShadow=true; base.receiveShadow=true;
+  gift.add(base);
+  // vertical ribbons on base
+  [[0,0,0,1.02],[0,0,Math.PI/2,1.02]].forEach(([,, rz])=>{
+    const r=new THREE.Mesh(new THREE.BoxGeometry(.32,1.42,2.02),ribMat); r.position.y=-.2; r.rotation.y=rz; r.castShadow=true; gift.add(r);
+  });
+
+  // lid group (animated)
+  const lid=new THREE.Group(); lid.position.y=.55; gift.add(lid);
+  const lidTop=new THREE.Mesh(new THREE.BoxGeometry(2.2,.42,2.2),boxMat); lidTop.castShadow=true; lid.add(lidTop);
+  const r1=new THREE.Mesh(new THREE.BoxGeometry(.34,.44,2.24),ribMat); r1.castShadow=true; lid.add(r1);
+  const r2=new THREE.Mesh(new THREE.BoxGeometry(2.24,.44,.34),ribMat); r2.castShadow=true; lid.add(r2);
+  // bow
+  const bow=new THREE.Group(); bow.position.y=.32; lid.add(bow);
+  for(let i=0;i<5;i++){const loop=new THREE.Mesh(new THREE.TorusGeometry(.26,.09,12,24),ribMat);
+    loop.rotation.y=i*(Math.PI/5); loop.scale.set(1,.6,1); loop.castShadow=true; bow.add(loop);}
+  const knot=new THREE.Mesh(new THREE.SphereGeometry(.16,20,20),ribMat); knot.castShadow=true; bow.add(knot);
+
+  // floating particles (ambient)
+  const N=420, pg=new THREE.BufferGeometry(), pos=new Float32Array(N*3);
+  for(let i=0;i<N;i++){const rdr=2.5+Math.random()*5,th=Math.random()*7,ph=Math.acos(2*Math.random()-1);
+    pos[i*3]=rdr*Math.sin(ph)*Math.cos(th); pos[i*3+1]=Math.random()*6-1; pos[i*3+2]=rdr*Math.sin(ph)*Math.sin(th);}
+  pg.setAttribute("position",new THREE.BufferAttribute(pos,3));
+  const pts=new THREE.Points(pg,new THREE.PointsMaterial({color:0xff9bc0,size:.045,transparent:true,opacity:.8,blending:THREE.AdditiveBlending,depthWrite:false}));
+  scene.add(pts);
+
+  // explosion particles (hidden until open)
+  const EN=300, eg=new THREE.BufferGeometry(), epos=new Float32Array(EN*3), evel=[];
+  for(let i=0;i<EN;i++){epos[i*3]=0;epos[i*3+1]=.4;epos[i*3+2]=0;
+    const a=Math.random()*Math.PI*2,b=Math.acos(2*Math.random()-1),s=.06+Math.random()*.16;
+    evel.push([Math.sin(b)*Math.cos(a)*s,Math.abs(Math.cos(b))*s+.04,Math.sin(b)*Math.sin(a)*s]);}
+  eg.setAttribute("position",new THREE.BufferAttribute(epos,3));
+  const emat=new THREE.PointsMaterial({color:0xffcf5c,size:.12,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false});
+  const exp=new THREE.Points(eg,emat); scene.add(exp);
+  let exploding=false;
+
+  // mouse parallax
+  let tmx=0,tmy=0,cmx=0,cmy=0;
+  addEventListener("mousemove",e=>{tmx=(e.clientX/innerWidth-.5);tmy=(e.clientY/innerHeight-.5);});
+  addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+
+  let running=true;
+  (function animate(){ if(!running)return; requestAnimationFrame(animate);
+    cmx+=(tmx-cmx)*.05; cmy+=(tmy-cmy)*.05;
+    gift.rotation.y += .004;
+    gift.rotation.x = cmy*.35; gift.rotation.z = cmx*.12;
+    camera.position.x += (cmx*1.4 - camera.position.x)*.05;
+    camera.position.y += (2.4 - cmy*1.0 - camera.position.y)*.05;
+    camera.lookAt(0,.5,0);
+    pts.rotation.y += .0009;
+    if(exploding){const p=eg.attributes.position.array;
+      for(let i=0;i<EN;i++){evel[i][1]-=.004;p[i*3]+=evel[i][0];p[i*3+1]+=evel[i][1];p[i*3+2]+=evel[i][2];}
+      eg.attributes.position.needsUpdate=true; emat.opacity=Math.max(0,emat.opacity-.006);}
+    renderer.render(scene,camera);
+  })();
+
+  openGift=function(done){
+    exploding=true; emat.opacity=1; Audio2.boom();
+    if(HAS_GSAP){
+      const tl=gsap.timeline({onComplete:done});
+      tl.to(lid.position,{y:3.4,duration:1.1,ease:"power3.in"},0)
+        .to(lid.rotation,{x:.9,z:-.7,duration:1.1,ease:"power2.in"},0)
+        .to(lid.scale,{x:.2,y:.2,z:.2,duration:.9,ease:"power2.in"},.3)
+        .to(camera.position,{z:3.6,duration:1.3,ease:"power3.inOut"},0)
+        .to(base.scale,{x:.01,y:.01,z:.01,duration:.5,ease:"power2.in"},.7)
+        .to("#flash",{opacity:1,duration:.18,ease:"power2.in"},.85)
+        .to("#flash",{opacity:0,duration:.7,ease:"power2.out"},1.05)
+        .to("#stage",{filter:"blur(20px)",opacity:0,duration:.7,ease:"power2.in"},1.0);
+    } else {
+      lid.visible=false; base.visible=false;
+      document.getElementById("flash").style.transition="opacity .8s"; document.getElementById("flash").style.opacity="1";
+      setTimeout(()=>{document.getElementById("flash").style.opacity="0";},180);
+      setTimeout(()=>{const s=document.getElementById("stage");s.style.transition="opacity .7s";s.style.opacity="0";done&&done();},700);
+    }
+    setTimeout(()=>{running=false;},2600);
+  };
+})();
+
+/* =====================================================================
+   OPENING -> CONTENT
+   ===================================================================== */
+function revealContent(){
+  const stage=document.getElementById("stage"), content=document.getElementById("content");
+  stage.style.pointerEvents="none";
+  setTimeout(()=>stage.remove(),900);
+  content.style.visibility="visible";
+  document.body.classList.remove("locked");
+  document.querySelector(".logo").classList.add("show");
+  if(HAS_GSAP){ gsap.to(content,{opacity:1,duration:1,ease:"power2.out"}); }
+  else content.style.opacity=1;
+  initScroll(); initSections(); Audio2.fan();
+  const c=document.getElementById("content");
+  burst(innerWidth/2,innerHeight*.4,90);
+  toast("🏆 Achievement: You opened the gift");
+}
+document.getElementById("openBtn").addEventListener("click",function(){
+  this.style.pointerEvents="none"; Audio2.oink();
+  if(openGift) openGift(revealContent); else revealContent();
+});
+
+/* =====================================================================
+   SCROLL ANIMATIONS
+   ===================================================================== */
+function initScroll(){
+  // progress bar
+  const bar=document.querySelector(".progress");
+  addEventListener("scroll",()=>{const sc=scrollY/(document.body.scrollHeight-innerHeight);bar.style.width=(sc*100)+"%";},{passive:true});
+
+  // universal reveal (IO) — works with or without gsap
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target);}}),{threshold:.18});
+  document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
+
+  if(HAS_GSAP && typeof ScrollTrigger!=="undefined" && !REDUCED){
+    // parallax auroras
+    gsap.utils.toArray(".aurora").forEach((b,i)=>{
+      gsap.to(b,{yPercent:(i%2?-1:1)*40,ease:"none",
+        scrollTrigger:{trigger:b.closest(".phase"),start:"top bottom",end:"bottom top",scrub:true}});
+    });
+    // detected text scale on scroll
+    gsap.to(".detected",{scale:1.08,letterSpacing:"-.02em",ease:"none",
+      scrollTrigger:{trigger:"#p1",start:"top top",end:"bottom top",scrub:true}});
+    // evidence files slide
+    gsap.utils.toArray(".file").forEach(f=>{
+      gsap.from(f,{xPercent:-4,opacity:0,duration:.8,
+        scrollTrigger:{trigger:f,start:"top 82%"}});
+    });
+    // HUD diagnostics fill when in view
+    ScrollTrigger.create({trigger:"#p2",start:"top 60%",once:true,onEnter:fillDiagnostics});
+    // gallery frames stagger
+    gsap.from(".frame",{y:50,opacity:0,stagger:.08,duration:.7,
+      scrollTrigger:{trigger:"#p6",start:"top 65%"}});
+  } else {
+    // fallback: fill diagnostics via IO
+    new IntersectionObserver((e,o)=>{if(e[0].isIntersecting){fillDiagnostics();o.disconnect();}},{threshold:.4}).observe(document.getElementById("p2"));
+  }
+}
+
+/* =====================================================================
+   SECTION CONTENT BUILDERS
+   ===================================================================== */
+const DIAG=[
+  {lab:"PIG DNA SEQUENCE",val:"99%",pct:99},
+  {lab:"HUMAN RESIDUE",val:"01%",pct:4},
+  {lab:"SNACK DETECTION",val:"100%",pct:100},
+  {lab:"SLEEP CAPACITY",val:"∞",pct:100},
+  {lab:"DRAMA OUTPUT",val:"MAX",pct:97},
+  {lab:"RAGE POTENTIAL",val:"EXTREME",pct:92},
+];
+const EVID=[
+  {n:"01",t:"The Vanishing Chips",b:"A family-size bag, gone in four minutes. No survivors, no witnesses, only crumbs on a hoodie that did not match anyone else in the building.",tag:"Confirmed snack heist"},
+  {n:"02",t:"The Hibernation Files",b:"Subject slept through a fire drill, two birthdays, and one minor earthquake. Heart rate readings suggest she was, technically, a bear.",tag:"World record, unofficial"},
+  {n:"03",t:"The 'One Bite' Incident",b:"Suspect insists she 'only had one bite.' Forensics recovered eleven wrappers beneath the bed. The lie detector simply gave up.",tag:"Lying detected"},
+  {n:"04",t:"The Belly-Rub Demand",b:"Oinks when happy. Snorts when ignored. Files formal complaints when the wifi drops. Conclusion: one hundred percent, scientifically, a pig.",tag:"Case closed"},
+];
+const GAL=["Tiny troublemaker","Snack thief era","Us, being us","Best memory"];
+
+function initSections(){
+  // diagnostics rows
+  const dg=document.getElementById("diag");
+  dg.innerHTML=DIAG.map(d=>`<div class="diag-row"><div class="top"><span class="lab">${d.lab}</span><span class="val">${d.val}</span></div><div class="meter"><i data-pct="${d.pct}"></i></div></div>`).join("");
+  // evidence
+  document.getElementById("dossier").innerHTML=EVID.map(e=>`
+    <div class="file"><div class="num">${e.n}</div>
+    <div><div class="ftitle">${e.t}</div><div class="fbody">${e.b}</div><span class="ftag">${e.tag}</span></div></div>`).join("");
+  // gallery
+  document.getElementById("gallery").innerHTML=GAL.map(g=>`<div class="frame"><div><div class="ph">🖼️</div><small>${g}</small></div></div>`).join("");
+  // data streams
+  const rnd=()=>Array.from({length:60},()=>Math.random()>.5?"01":"10").join(" ");
+  ["stream1","stream2"].forEach(id=>{const el=document.getElementById(id);
+    el.textContent=Array.from({length:40},rnd).join("\n");});
+}
+function fillDiagnostics(){document.querySelectorAll(".meter i").forEach(i=>{i.style.width=i.dataset.pct+"%";});}
+
+/* =====================================================================
+   RAGE CORE
+   ===================================================================== */
+(function(){
+  const btn=document.getElementById("rageBtn"),num=document.getElementById("rageNum"),
+        arc=document.getElementById("gaugeArc"),msg=document.getElementById("rageMsg");
+  const CIRC=540; let rage=0,done=false;
+  const MSGS=["Rage detected. 🐷","Pig.exe has stopped responding.","Snack levels critically high.",
+    "Someone touched her plate.","Nap interrupted. This means war.","Wifi disconnected. Code red.",
+    "Drama buffering… 91%","Belly rub denied. Fury rising."];
+  btn.addEventListener("click",e=>{
+    if(done){const r=btn.getBoundingClientRect();burst(r.left+r.width/2,r.top,80);return;}
+    rage=Math.min(100,rage+Math.floor(Math.random()*10)+7);
+    num.textContent=rage; arc.style.strokeDashoffset=CIRC-(CIRC*rage/100);
+    msg.textContent=MSGS[Math.random()*MSGS.length|0];
+    document.body.classList.add("shake"); setTimeout(()=>document.body.classList.remove("shake"),420);
+    Audio2.zap();
+    const r=btn.getBoundingClientRect(); burst(r.left+r.width/2,r.top+10,18,["⚡","🔥","💥","🐷"]);
+    if(rage>=100&&!done){done=true; msg.textContent="MISSION ACCOMPLISHED 🐷🎉"; btn.textContent="🎉 Again? Again.";
+      Audio2.fan(); Audio2.boom(); const g=document.querySelector(".gauge-wrap").getBoundingClientRect();
+      burst(g.left+g.width/2,g.top+g.height/2,150); toast("🏆 Achievement: Rage Core overloaded");}
+  });
+})();
+
+/* =====================================================================
+   EMOTIONAL MUSIC
+   ===================================================================== */
+(function(){const b=document.getElementById("musicBtn");let on=false;
+  b.addEventListener("click",()=>{on=!on;Audio2.toggleMusic(on);b.textContent=on?"♪ pause the feels":"♪ Play something gentle";});})();
+
+/* =====================================================================
+   EASTER EGGS
+   ===================================================================== */
+// double-click logo -> secret mode
+document.querySelector(".logo").addEventListener("dblclick",()=>{
+  document.body.classList.toggle("secret");
+  toast(document.body.classList.contains("secret")?"🔓 SECRET MODE engaged.":"Secret mode off.","secret");
+  burst(60,60,30);
+});
+// click anywhere a pig glyph in toasts/logo -> handled; dedicated pig-nose on logo pig
+document.querySelector(".logo .pig").addEventListener("click",e=>{e.stopPropagation();
+  Audio2.oink(); burst(e.clientX,e.clientY,40); toast("🐽 *oink* — you booped the nose","nose");});
+// konami -> ultimate pig mode
+(function(){const seq=["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];let i=0;
+  addEventListener("keydown",e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;
+    if(k===seq[i].toLowerCase()){i++;if(i===seq.length){i=0;ultimate();}}else i=(k===seq[0]?1:0);});
+  function ultimate(){document.body.classList.add("ultimate");toast("🐷👑 ULTIMATE PIG MODE UNLOCKED","ult");Audio2.fan();
+    let n=0;const iv=setInterval(()=>{burst(Math.random()*innerWidth,-20,12,["🐷","🐽","🐖"]);if(++n>14)clearInterval(iv);},180);}
+})();
+
+// failsafe: if libs blocked and stage never opens, allow click-through after 8s
+setTimeout(()=>{if(document.getElementById("stage")&&!HAS_THREE){/* show fallback box already as gradient */}},100);
+</script>
+</body>
+</html>
